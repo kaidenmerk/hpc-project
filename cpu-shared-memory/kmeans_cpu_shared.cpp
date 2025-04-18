@@ -1,4 +1,4 @@
-// serial/kmeans_serial.cpp
+// shared/kmeans_cpu_shared.cpp
 
 #include <iostream>
 #include <fstream>
@@ -8,6 +8,7 @@
 #include <random>
 #include <algorithm>
 #include <stdexcept>
+#include <omp.h>
 
 using FeatureVec = std::vector<float>;
 
@@ -25,7 +26,7 @@ std::vector<Point> load_data(const std::string &path, size_t &D) {
         std::exit(1);
     }
     std::string line;
-    // 1) Read header to count columns
+    // Read header to count columns
     if (!std::getline(fin, line)) {
         std::cerr << "Empty file: " << path << "\n";
         std::exit(1);
@@ -33,17 +34,11 @@ std::vector<Point> load_data(const std::string &path, size_t &D) {
     std::stringstream hdr(line);
     std::string field;
     D = 0;
-    while (std::getline(hdr, field, ',')) {
-        D++;
-    }
-    if (D == 0) {
-        std::cerr << "No columns found in header of " << path << "\n";
-        std::exit(1);
-    }
-
-    // 2) Read data rows
+    while (std::getline(hdr, field, ',')) D++;
+    
     std::vector<Point> data;
     data.reserve(1200000);
+    // Read data rows
     while (std::getline(fin, line)) {
         std::stringstream ss(line);
         Point p(D);
@@ -82,16 +77,16 @@ std::vector<FeatureVec> init_centroids(
 }
 
 // Squared Euclidean distance
-float sqrDist(const FeatureVec &a, const FeatureVec &b) {
+auto sqrDist = [](const FeatureVec &a, const FeatureVec &b) {
     float s = 0.0f;
     for (size_t i = 0; i < a.size(); ++i) {
         float d = a[i] - b[i];
         s += d * d;
     }
     return s;
-}
+};
 
-// Lloyd's algorithm
+// Parallel K-means using OpenMP
 void kmeans(std::vector<Point> &data,
             std::vector<FeatureVec> &centroids,
             size_t max_iters)
@@ -99,37 +94,47 @@ void kmeans(std::vector<Point> &data,
     size_t K = centroids.size();
     size_t D = centroids[0].size();
     std::vector<FeatureVec> newc(K, FeatureVec(D));
-    std::vector<size_t> counts(K);
+    std::vector<long> counts(K);
 
     for (size_t iter = 0; iter < max_iters; ++iter) {
-        // zero accumulators
+        // Zero accumulators
         for (size_t j = 0; j < K; ++j) {
             std::fill(newc[j].begin(), newc[j].end(), 0.0f);
             counts[j] = 0;
         }
-        // assign + accumulate
-        for (auto &pt : data) {
+
+        // Assignment and accumulation in parallel
+        #pragma omp parallel for schedule(static)
+        for (size_t i = 0; i < data.size(); ++i) {
+            // Find nearest centroid
             size_t best = 0;
-            float bestD = sqrDist(pt.x, centroids[0]);
+            float bestD = sqrDist(data[i].x, centroids[0]);
             for (size_t j = 1; j < K; ++j) {
-                float d = sqrDist(pt.x, centroids[j]);
+                float d = sqrDist(data[i].x, centroids[j]);
                 if (d < bestD) { bestD = d; best = j; }
             }
-            pt.cluster = best;
+            data[i].cluster = static_cast<int>(best);
+            // Atomic accumulation
+            #pragma omp atomic
             counts[best]++;
-            for (size_t d = 0; d < D; ++d)
-                newc[best][d] += pt.x[d];
+            for (size_t d = 0; d < D; ++d) {
+                #pragma omp atomic
+                newc[best][d] += data[i].x[d];
+            }
         }
-        // update centroids & check movement
+
+        // Update centroids and check movement
         float maxMove = 0.0f;
         for (size_t j = 0; j < K; ++j) {
-            for (size_t d = 0; d < D; ++d)
-                newc[j][d] /= counts[j];
-            maxMove = std::max(maxMove,
-                               sqrDist(centroids[j], newc[j]));
+            if (counts[j] == 0) continue; // avoid divide by zero
+            for (size_t d = 0; d < D; ++d) {
+                newc[j][d] /= static_cast<float>(counts[j]);
+            }
+            float move = sqrDist(centroids[j], newc[j]);
+            if (move > maxMove) maxMove = move;
             centroids[j] = newc[j];
         }
-        // if (maxMove < tol) break;
+
     }
 }
 
@@ -144,15 +149,18 @@ void write_labels(const std::string &out_path,
 }
 
 int main(int argc, char **argv) {
-    if (argc != 5) {
-        std::cerr << "Usage: kmeans_serial <csv> <K> <max_iters> <out.csv>\n";
+    if (argc != 6) {
+        std::cerr << "Usage: kmeans_shared <csv> <K> <max_iters> <threads> <out.csv>\n";
         return 1;
     }
     std::string csv = argv[1];
     size_t K        = std::stoul(argv[2]);
-    //float tol       = std::stof(argv[3]);
     size_t iters    = std::stoul(argv[3]);
-    std::string out = argv[4];
+    int threads     = std::stoi(argv[4]);
+    std::string out = argv[5];
+
+    omp_set_num_threads(threads);
+    std::cerr << "Running with " << threads << " threads...\n";
 
     size_t D;
     auto data = load_data(csv, D);
@@ -164,3 +172,4 @@ int main(int argc, char **argv) {
     write_labels(out, data);
     return 0;
 }
+
