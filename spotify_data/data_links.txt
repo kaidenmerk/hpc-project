@@ -1,0 +1,2 @@
+Original data: https://www.kaggle.com/datasets/rodolfofigueroa/spotify-12m-songs/data
+Cleaned data: https://drive.google.com/file/d/1gGMF5-DOyKXWTPvxq16Tjexu6eb8SJiz/view?usp=drive_link
