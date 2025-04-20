@@ -1,5 +1,5 @@
 # 1. Build & Execution
-First, download the spotify_pca_cleaned.csv dataset in spotify_data/data_links.txt.
+First, download the `spotify_pca_cleaned.csv` dataset in `spotify_data/data_links.txt`
 ## Serial Build & Execution
 ```
 module load gcc
@@ -31,6 +31,20 @@ Data Cleaning: Due to the high dimensionality of our data, we decided to use the
 
 # 3. Scaling Study Results
 
+## Shared Memory CPU
+
+**Setup:**
+- K = 9, max_iters = 100
+- Timing via shell 'time' of full end-to-end run
+
+**Results:**
+| Threads | Wall‑Clock (s) | Speedup |
+|:-------:|:--------------:|:-------:|
+| 1       | 4.025          | ----    |
+| 2       | 2.997          | 1.34    |
+| 3       | 2.550          | 1.58    |
+| 4       | 2.498          | 1.61    |
+| 5       | 2.486          | 1.62    |
 # 4. Validation
 After running 2 or more implementations, validation can be performed using \\
 \' python validate.py path-to-directory \' \\
