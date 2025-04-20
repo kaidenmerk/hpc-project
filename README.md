@@ -1,18 +1,21 @@
 # 1. Build & Execution
 First, download the spotify_pca_cleaned.csv dataset in spotify_data/data_links.txt.
 ## Serial Build & Execution
-\' module load gcc \'
-\' cd serial\ \'
-\' make \'
-\'./kmeans_serial ../spotify_pca_cleaned.csv 9 100 ../outputs/serial_output.csv \'
+```
+module load gcc
+cd serial\
+make
+./kmeans_serial ../spotify_pca_cleaned.csv 9 100 ../outputs/serial_output.csv
+```
 Example usage shown above to replicate our approach with K = 9 and Epochs = 100.
 
 ## Shared Memory CPU Build & Execution
 
-\' module load gcc \'
-\' cd shared\ \'
-\' make \'
-\'./kmeans_cpu_shared ../spotify_pca_cleaned.csv 9 100 4 ../outputs/cpu_shared_output.csv \'
+``` module load gcc \' ```
+``` cd shared\ ```
+``` make ```
+``` ./kmeans_cpu_shared ../spotify_pca_cleaned.csv 9 100 4 ../outputs/cpu_shared_output.csv ```
+
 Example usage shown above to replicate our approach with K = 9, Epochs = 100 and num_threads = 4.
 
 # 2. Approaches
