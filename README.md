@@ -47,7 +47,7 @@ Data Cleaning: Due to the high dimensionality of our data, we decided to use the
 | 5       | 2.486          | 1.62    |
 # 4. Validation
 After running 2 or more implementations, validation can be performed using \\
-\' python validate.py path-to-directory \' \\
+```python validate.py path-to-directory``` \\
 where the .csv files to be checked are stored in the same directory.
 
 # 5. Visualization
