@@ -11,10 +11,12 @@ Example usage shown above to replicate our approach with K = 9 and Epochs = 100.
 
 ## Shared Memory CPU Build & Execution
 
-``` module load gcc \' ```
-``` cd shared\ ```
-``` make ```
-``` ./kmeans_cpu_shared ../spotify_pca_cleaned.csv 9 100 4 ../outputs/cpu_shared_output.csv ```
+```
+module load gcc
+cd shared\
+make
+./kmeans_cpu_shared ../spotify_pca_cleaned.csv 9 100 4 ../outputs/cpu_shared_output.csv
+```
 
 Example usage shown above to replicate our approach with K = 9, Epochs = 100 and num_threads = 4.
 
