@@ -1,5 +1,3 @@
-// shared/kmeans_cpu_shared.cpp
-
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -86,55 +84,84 @@ auto sqrDist = [](const FeatureVec &a, const FeatureVec &b) {
     return s;
 };
 
-// Parallel K-means using OpenMP
+// Parallel K-means using per-thread accumulators for better scaling
 void kmeans(std::vector<Point> &data,
             std::vector<FeatureVec> &centroids,
             size_t max_iters)
 {
     size_t K = centroids.size();
     size_t D = centroids[0].size();
+    size_t N = data.size();
+    int T = omp_get_max_threads();
+
+    // Global accumulators
     std::vector<FeatureVec> newc(K, FeatureVec(D));
     std::vector<long> counts(K);
 
+    // Thread-local accumulators: [thread][cluster][dim]
+    std::vector<std::vector<FeatureVec>> local_newc(T);
+    std::vector<std::vector<long>> local_counts(T);
+    for (int t = 0; t < T; ++t) {
+        local_newc[t].assign(K, FeatureVec(D, 0.0f));
+        local_counts[t].assign(K, 0);
+    }
+
     for (size_t iter = 0; iter < max_iters; ++iter) {
-        // Zero accumulators
+        // Reset global accumulators
         for (size_t j = 0; j < K; ++j) {
             std::fill(newc[j].begin(), newc[j].end(), 0.0f);
             counts[j] = 0;
         }
 
-        // Assignment and accumulation in parallel
-        #pragma omp parallel for schedule(static)
-        for (size_t i = 0; i < data.size(); ++i) {
-            // Find nearest centroid
-            size_t best = 0;
-            float bestD = sqrDist(data[i].x, centroids[0]);
-            for (size_t j = 1; j < K; ++j) {
-                float d = sqrDist(data[i].x, centroids[j]);
-                if (d < bestD) { bestD = d; best = j; }
+        // Parallel assignment & local accumulation
+        #pragma omp parallel
+        {
+            int tid = omp_get_thread_num();
+            auto &my_newc = local_newc[tid];
+            auto &my_counts = local_counts[tid];
+            // Zero local accumulators
+            for (size_t j = 0; j < K; ++j) {
+                std::fill(my_newc[j].begin(), my_newc[j].end(), 0.0f);
+                my_counts[j] = 0;
             }
-            data[i].cluster = static_cast<int>(best);
-            // Atomic accumulation
-            #pragma omp atomic
-            counts[best]++;
-            for (size_t d = 0; d < D; ++d) {
-                #pragma omp atomic
-                newc[best][d] += data[i].x[d];
+
+            // Distribute work
+            #pragma omp for schedule(static)
+            for (size_t i = 0; i < N; ++i) {
+                // Find nearest centroid
+                size_t best = 0;
+                float bestD = sqrDist(data[i].x, centroids[0]);
+                for (size_t j = 1; j < K; ++j) {
+                    float d = sqrDist(data[i].x, centroids[j]);
+                    if (d < bestD) { bestD = d; best = j; }
+                }
+                data[i].cluster = static_cast<int>(best);
+                // Accumulate locally
+                my_counts[best]++;
+                for (size_t d = 0; d < D; ++d) {
+                    my_newc[best][d] += data[i].x[d];
+                }
+            }
+        } // implicit barrier
+
+        // Merge thread-local into global
+        for (int t = 0; t < T; ++t) {
+            for (size_t j = 0; j < K; ++j) {
+                counts[j] += local_counts[t][j];
+                for (size_t d = 0; d < D; ++d) {
+                    newc[j][d] += local_newc[t][j][d];
+                }
             }
         }
 
-        // Update centroids and check movement
-        float maxMove = 0.0f;
+        // Update centroids
         for (size_t j = 0; j < K; ++j) {
             if (counts[j] == 0) continue; // avoid divide by zero
             for (size_t d = 0; d < D; ++d) {
                 newc[j][d] /= static_cast<float>(counts[j]);
             }
-            float move = sqrDist(centroids[j], newc[j]);
-            if (move > maxMove) maxMove = move;
             centroids[j] = newc[j];
         }
-
     }
 }
 
@@ -172,4 +199,3 @@ int main(int argc, char **argv) {
     write_labels(out, data);
     return 0;
 }
-
