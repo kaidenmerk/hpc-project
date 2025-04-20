@@ -23,8 +23,8 @@ Example usage shown above to replicate our approach with K = 9, Epochs = 100 and
 # 2. Approaches
 Data Cleaning: Due to the high dimensionality of our data, we decided to use the PCA algorithm to compress numeric fields we found relevant to genre (Insert used features here). We compressed the N dimensional data into 3 dimensions (x, y, z) and used that for our clustering.
 
-1. Serial
-2. Parallel Shared Memory CPU
+1. Serial: For the serial approach, we used Lloyd's algorithm as described in the given tutorial. For each point, compute the Euclidean squared distance to all centroids or clusters, and assign it to the nearest one. Then recompute each centroid to be the mean of its included points. This is done over n points across m epochs.
+2. Parallel Shared Memory CPU: We optimized the serial approach using openMP. To do this, we split the dataset accross the T threads we had available, so each thread was in charge of a subset of points. Each thread maintained their own arrays for each clusters. After a barrier, the individual arrays were combined, and the clusters were updated.
 3. Parallel CUDA GPU
 4. Distributed Memory CPU
 5. Distributed Memory GPU
