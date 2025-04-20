@@ -51,7 +51,13 @@ After running 2 or more implementations, validation can be performed using
 where the .csv files to be checked are stored in the same directory.
 
 # 5. Visualization
+  ![30°/45°](visualizations/clusters_e30_a45.png)
 
+  ![90°/0°](visualizations/clusters_e90_a0.png)
+
+  ![0°/0°](visualizations/clusters_e0_a0.png)
+
+  ![0°/90°](visualizations/clusters_e0_a90.png)
 # 6. Who did what
 
 Kaiden McMillen did the serial and parallel shared memory CPU implementations and their scaling studies. Kaiden also handled the validation and visualization of the implementations.
