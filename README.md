@@ -18,6 +18,21 @@ make
 ./kmeans_cpu_shared ../spotify_pca_cleaned.csv 9 100 4 ../outputs/cpu_shared_output.csv
 ```
 
+## Message Passing CPU Build & Execution
+
+```
+module load gcc intel-mpi
+mpicxx kMeansMpi.cpp -o kMeans
+./kMeans 
+```
+
+## Message Passing GPU Build & Execution
+```
+module load gcc cuda intel-mpi cmake
+make
+./kMeans
+```
+
 Example usage shown above to replicate our approach with K = 9, Epochs = 100 and num_threads = 4.
 
 # 2. Approaches
@@ -26,8 +41,8 @@ Data Cleaning: Due to the high dimensionality of our data, we decided to use the
 1. Serial: For the serial approach, we used Lloyd's algorithm as described in the given tutorial. For each point, compute the Euclidean squared distance to all centroids or clusters, and assign it to the nearest one. Then recompute each centroid to be the mean of its included points. This is done over n points across m epochs.
 2. Parallel Shared Memory CPU: We optimized the serial approach using openMP. To do this, we split the dataset accross the T threads we had available, so each thread was in charge of a subset of points. Each thread maintained their own arrays for each clusters. After a barrier, the individual arrays were combined, and the clusters were updated.
 3. Parallel CUDA GPU
-4. Distributed Memory CPU
-5. Distributed Memory GPU
+4. Distributed Memory CPU: We optimize the serial approach using mpi. To do this we send the centroids to each core, then scatter the dataset accross N cores. Then we calculate the distance for each point. We then gather all the data back to core 0 and recalculate the centroids. 
+5. Distributed Memory GPU: We do the same as the Cpu program, but we use cuda to calcuate the distances. 
 
 # 3. Scaling Study Results
 
@@ -60,4 +75,4 @@ where the .csv files to be checked are stored in the same directory.
   ![0°/90°](visualizations/clusters_e0_a90.png)
 # 6. Who did what
 
-Kaiden McMillen did the serial and parallel shared memory CPU implementations and their scaling studies. Kaiden also handled the validation and visualization of the implementations.
+Kaiden McMillen did the serial and parallel shared memory CPU implementations and their scaling studies. Kaiden also handled the validation and visualization of the implementations. Hugh harps did the distributed CPU and GPU implementations and their scaling studies.
