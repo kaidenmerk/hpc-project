@@ -100,4 +100,6 @@ where the .csv files to be checked are stored in the same directory.
   ![0°/90°](visualizations/clusters_e0_a90.png)
 # 6. Who did what
 
-Kaiden McMillen did the serial and parallel shared memory CPU implementations and their scaling studies. Kaiden also handled the validation and visualization of the implementations. Hugh harps did the distributed CPU and GPU implementations and their scaling studies. Wil Stika cleaned the spotify data and took care of the parallel CUDA GPU implementation as well as its scaling study with different block sizes
+Kaiden McMillen did the serial and parallel shared memory CPU implementations and their scaling studies. Kaiden also handled the validation and visualization of the implementations. 
+Hugh Harps did the distributed CPU and GPU implementations and their scaling studies. 
+Wil Stika cleaned the spotify data and took care of the parallel CUDA GPU implementation as well as its scaling study with different block sizes
