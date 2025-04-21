@@ -84,6 +84,31 @@ The CUDA implementation of k-means clustering leverages GPU parallelism to effic
 | 512        | 0.2011      |
 | 1024       | 0.2058      |
 
+## Distributed CPU
+**Setup**
+- K = 9, epochs = 100
+**Results:**
+| Block Size | Runtime (s) | 
+|:----------:|:-----------:|
+| 1          | 4.5282      |
+| 2          | 3.0540      |
+| 3          | 2.6019      |
+| 4          | 2.4952      |
+| 5          | 2.4335      |
+
+
+
+## Distributed GPU
+**Setup**
+- K = 9, epochs = 100, block size = 256
+**Results:**
+| Block Size | Runtime (s) | 
+|:----------:|:-----------:|
+| 1          | 3.3547      |
+| 2          | 2.1834      |
+| 3          | 1.9406      |
+| 4          | 1.6277      |
+| 5          | 1.6006      |
 
 # 4. Validation
 After running 2 or more implementations, validation can be performed using
