@@ -21,17 +21,18 @@ make
 
 ## Message Passing CPU Build & Execution
 
+(N is however many cores)
 ```
 module load gcc intel-mpi
 mpicxx kMeansMpi.cpp -o kMeans
-./kMeans 
+mpiexec -n N kMeans
 ```
 
 ## Message Passing GPU Build & Execution
 ```
 module load gcc cuda intel-mpi cmake
 make
-./kMeans
+mpiexec -n N kMeans
 ```
 Example usage shown above to replicate our approach with K = 9, Epochs = 100 and num_threads = 4.
 
